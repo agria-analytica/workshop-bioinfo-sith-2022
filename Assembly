@@ -60,7 +60,7 @@ DATA_PE2 = data/SRR10418192_2.fastq.gz data/SRR10418191_2.fastq.gz
 DATA_ACULY_GENOME = data/Aculy_genome.tfa
 DATA_ACULY_ANNOTATION = data/Aculy_gff3_20200924.gff3
 
-unduh-data: $(DIRS) $(DATA) $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION) 
+unduh-data: $(DIRS) $(DATA_SE) $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION) 
 
 $(DATA_SE): 
 	wget -P data -i $(SRA)
@@ -72,7 +72,7 @@ $(DATA_ACULY_GENOME):
 $(DATA_ACULY_ANNOTATION): 
 	wget -P $(dir $@) $(ACULY_ANNOTATION) && \
 	tar -xvzf $(basename $@).tar.gz -C data && \
-	cat $(dir $@)/scaffold*.gff3 > $@
+	cat $(dir $@)scaffold*.gff3 > $@
 
 # quality control reads sekuensing menggunakan fastqc.
 DATA_TRIMMED_SE = results/trimmomatic/$(basename $(basename $(notdir $(DATA_SE)))).trimmed.fastq.gz
