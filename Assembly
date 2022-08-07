@@ -51,18 +51,19 @@ bin/gatb-minia.ok:
 	touch $@
 
 # unduh data menggunakan wget.
-SRA = ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/093/SRR10418193/SRR10418193.fastq.gz
+SRA = data/Aculops.lycopersici.SRA.txt
 ACULY_GENOME = https://bioinformatics.psb.ugent.be/gdb/aculops/Aculy_genome.tfa.gz
 ACULY_ANNOTATION = https://bioinformatics.psb.ugent.be/gdb/aculops/Aculy_gff3_20200924.tar.gz
-DATA = data/SRR10418193.fastq.gz
+DATA_SE = data/SRR10418193.fastq.gz
+DATA_PE1 = data/SRR10418192_1.fastq.gz data/SRR10418191_1.fastq.gz
+DATA_PE2 = data/SRR10418192_2.fastq.gz data/SRR10418191_2.fastq.gz
 DATA_ACULY_GENOME = data/Aculy_genome.tfa
 DATA_ACULY_ANNOTATION = data/Aculy_gff3_20200924.gff3
 
-
 unduh-data: $(DIRS) $(DATA) $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION) 
 
-$(DATA): 
-	wget -P $(dir $@) $(SRA)
+$(DATA_SE): 
+	wget -P data -i $(SRA)
 
 $(DATA_ACULY_GENOME): 
 	wget -P $(dir $@) $(ACULY_GENOME) && \
@@ -74,29 +75,42 @@ $(DATA_ACULY_ANNOTATION):
 	cat $(dir $@)/scaffold*.gff3 > $@
 
 # quality control reads sekuensing menggunakan fastqc.
-DATA_TRIMMED = results/trimmomatic/$(basename $(basename $(notdir $(DATA)))).trimmed.fastq.gz
-FASTQC_BEFORE = $(addprefix results/fastqc/, $(addsuffix _fastqc.html, $(basename $(basename $(notdir $(DATA))))))
-FASTQC_AFTER = $(addprefix results/fastqc/, $(addsuffix _fastqc.html, $(basename $(basename $(notdir $(DATA_TRIMMED))))))
+DATA_TRIMMED_SE = results/trimmomatic/$(basename $(basename $(notdir $(DATA_SE)))).trimmed.fastq.gz
+DATA_TRIMMED_PE1 = $(patsubst %_1.fastq.gz,results/trimmomatic/%.trimmed_1P.fastq.gz, $(notdir $(DATA_PE1)))
+FASTQC_BEFORE = $(addprefix results/fastqc/, $(addsuffix _fastqc.html, $(basename $(basename $(notdir $(DATA_SE) $(DATA_PE1) $(DATA_PE2))))))
+FASTQC_AFTER = $(addprefix results/fastqc/, $(addsuffix _fastqc.html, $(basename $(basename $(notdir $(DATA_TRIMMED_SE) $(DATA_TRIMMED_PE1))))))
 
 data-qc: $(DIRS) $(FASTQC_BEFORE) $(DATA_TRIMMED) $(FASTQC_AFTER)
 	
-$(FASTQC_BEFORE): $(DATA)
-	@echo ""
+$(FASTQC_BEFORE): results/fastqc/%_fastqc.html: data/%.fastq.gz
+	@echo "$(DATA_PE1) $(DATA_TRIMMED_PE1)"
 	@echo "Quality control untuk data $(notdir $<) menggunakan FASTQC."
 	$(DOCKER_FASTQC) fastqc -t $(CORES) -o $(dir $@) $<
 
-$(DATA_TRIMMED): $(DATA)
+$(DATA_TRIMMED_SE): $(DATA_SE)
 	@echo ""
 	@echo "Quality trimming reads dari data $(notdir $<) menggunakan Trimmotatic."
 	$(DOCKER_TRIMMOMATIC) trimmomatic SE -threads $(CORES) $< $@ SLIDINGWINDOW:4:20 MINLEN:50 
 
-$(FASTQC_AFTER): $(DATA_TRIMMED)
+$(DATA_TRIMMED_PE1): results/trimmomatic/%.trimmed_1P.fastq.gz: data/%_1.fastq.gz
 	@echo ""
-	@echo "Quality control untuk data $(DATA) setelah trimming menggunakan Trimmomatic."
+	@echo "Quality trimming reads dari data $* menggunakan Trimmotatic."
+	$(DOCKER_TRIMMOMATIC) trimmomatic PE -threads $(CORES) $< $(patsubst %_1.fastq.gz,%_2.fastq.gz, $<) \
+	-baseout $(patsubst %.trimmed_1P.fastq.gz,%.trimmed.fastq.gz, $@) SLIDINGWINDOW:4:20 MINLEN:50 
+
+results/fastqc/%.trimmed_fastqc.html: results/trimmomatic/%.trimmed.fastq.gz
+	@echo ""
+	@echo "Quality control untuk data $< setelah trimming menggunakan Trimmomatic."
 	$(DOCKER_FASTQC) fastqc -t $(CORES) -o $(dir $@) $<
 
+results/fastqc/%.trimmed_1P_fastqc.html: results/trimmomatic/%.trimmed_1P.fastq.gz
+	@echo ""
+	@echo "Quality control untuk data $* setelah trimming menggunakan Trimmomatic."
+	$(DOCKER_FASTQC) fastqc -t $(CORES) -o $(dir $@) $< && \
+	$(DOCKER_FASTQC) fastqc -t $(CORES) -o $(dir $@) $(patsubst %.trimmed_1P.fastq.gz,%.trimmed_2P.fastq.gz, $<)
+
 # prediksi ukuran genom mengunakan distribusi kmer.
-KMC_DATA_TRIMMED = results/kmc/$(notdir $(basename $(DATA_TRIMMED))).k21.kmc_pre
+KMC_DATA_TRIMMED = results/kmc/$(notdir $(basename $(DATA_TRIMMED_SE))).k21.kmc_pre
 KMC_HIST_DATA_TRIMMED = results/kmc/$(notdir $(basename $(KMC_DATA_TRIMMED))).hist
 GENOMESCOPE_DATA_TRIMMED = results/genomescope/A.lycopersici.k21.p2_linear_plot.png \
 						   results/genomescope/A.lycopersici.k21.p3_linear_plot.png \
@@ -134,10 +148,10 @@ GATB_MINIA_DRAFT = results/gatb-minia/A.lycopersici.assembly.fasta
 
 genome-assembly: $(GATB_MINIA_DRAFT)
 	
-$(GATB_MINIA_DRAFT): $(DATA_TRIMMED)
+$(GATB_MINIA_DRAFT): $(DATA_TRIMMED_SE) $(DATA_TRIMMED_PE1)
 	@echo ""
 	@echo "Memulai de novo genome assembly dengan kmer=21-181 menggunakan GATB Minia pipeline."
-	$(DOCKER_GATB_MINIA) /bin/bash -c "cd $(dir $@) && ../../../gatb -s ../../$< -o $(notdir $(basename $@)) --nb-cores $(CORES)"
+	$(DOCKER_GATB_MINIA) /bin/bash -c "cd $(dir $@) && ../../../gatb -s ../../$< -1 ../../$(word 1, $(DATA_TRIMMED_PE1)) -2 ../../$(subst 1P,2P,$(word 1, $(DATA_TRIMMED_PE1))) -1 ../../$(word 2, $(DATA_TRIMMED_PE1)) -2 ../../$(subst 1P,2P,$(word 2, $(DATA_TRIMMED_PE1))) -o $(notdir $(basename $@)) --nb-cores $(CORES) --no-scaffolding"
 
 # evaluasi hasil whole genome assembly dengan berbagai ukuran kmer menggunakan quast.
 ASSEMBLY = results/gatb-minia/A.lycopersici.assembly_k21.contigs.fa \
