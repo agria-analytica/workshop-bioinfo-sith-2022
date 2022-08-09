@@ -26,7 +26,7 @@ $(DIRS):
 
 # instalasi program menggunakan platform docker.
 instal-program: $(DIRS) bin/fastqc.ok bin/kmc.ok bin/trimmomatic.ok bin/quast.ok \
-				bin/genomescope2.ok bin/gatb-minia.ok bin/minimap2.ok
+				bin/genomescope2.ok bin/gatb-minia.ok bin/minimap2.ok bin/liftoff.ok
 
 bin/fastqc.ok:
 	docker build -t agria.analytica/fastqc:0.11.9 -f bin/fastqc.dockerfile . && \
