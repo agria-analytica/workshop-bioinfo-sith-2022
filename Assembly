@@ -170,7 +170,7 @@ ASSEMBLY = results/gatb-minia/A.lycopersici.assembly_k21.contigs.fa \
 		   results/gatb-minia/A.lycopersici.assembly_k181.contigs.fa \
 ASSEMBLY_NAME = k21,k41,k61,k81,k101,k121,k141,k181
 
-evaluasi-assembly: results/gatb-minia/A.lycopersici.assembly.fasta $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION)
+evaluasi-assembly: results/gatb-minia/A.lycopersici.assembly_k181.contigs.fa $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION)
 	@echo ""
 	@echo "Memulai evaluasi hasil assembly pada berbagai ukuran kmer."
 	$(DOCKER_QUAST) quast.py -o results/quast -t $(CORES) -r $(DATA_ACULY_GENOME) \
