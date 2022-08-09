@@ -56,6 +56,11 @@ bin/minimap2.ok:
 	docker build -t agria.analytica/minimap2:2.4 -f bin/minimap2.dockerfile . && \
 	touch $@
 
+bin/liftoff.ok:
+	docker build -t agria.analytica/liftoff:1.6.1 -f bin/liftoff.dockerfile . && \
+	touch $@
+
+
 # unduh data menggunakan wget.
 SRA = data/Aculops.lycopersici.SRA.txt
 ACULY_GENOME = https://bioinformatics.psb.ugent.be/gdb/aculops/Aculy_genome.tfa.gz
