@@ -12,19 +12,21 @@ DOCKER_TRIMMOMATIC = $(DOCKER) agria.analytica/trimmomatic:0.38
 DOCKER_GATB_MINIA = docker run --rm -v $$(pwd):/tmp/project -w /tmp/project agria.analytica/gatb-minia:9d56f42  
 DOCKER_QUAST = $(DOCKER) agria.analytica/quast:5.0.2
 DOCKER_GENOMESCOPE = $(DOCKER) agria.analytica/genomescope2:2.0
+DOCKER_LIFTOFF = $(DOCKER) agria.analytica/liftoff:1.6.1
 CORES = 2
 
 # membuat struktur folder untuk analisis.
 DIRS = data \
 	   results results/fastqc results/trimmomatic results/gatb-minia results/quast \
-			   results/kmc results/kmc/temp results/genomescope \
+			   results/kmc results/kmc/temp results/genomescope results/liftoff \
 	   bin
 
 $(DIRS):
 	[ -d $@ ] || mkdir $@
 
 # instalasi program menggunakan platform docker.
-instal-program: $(DIRS) bin/fastqc.ok bin/kmc.ok bin/trimmomatic.ok bin/quast.ok bin/genomescope2.ok bin/gatb-minia.ok
+instal-program: $(DIRS) bin/fastqc.ok bin/kmc.ok bin/trimmomatic.ok bin/quast.ok \
+				bin/genomescope2.ok bin/gatb-minia.ok bin/minimap2.ok
 
 bin/fastqc.ok:
 	docker build -t agria.analytica/fastqc:0.11.9 -f bin/fastqc.dockerfile . && \
@@ -48,6 +50,10 @@ bin/genomescope2.ok:
 
 bin/gatb-minia.ok:
 	docker build -t agria.analytica/gatb-minia:9d56f42 -f bin/gatb-minia.dockerfile . && \
+	touch $@
+
+bin/minimap2.ok:
+	docker build -t agria.analytica/minimap2:2.4 -f bin/minimap2.dockerfile . && \
 	touch $@
 
 # unduh data menggunakan wget.
@@ -171,6 +177,20 @@ evaluasi-assembly: results/gatb-minia/A.lycopersici.assembly.fasta $(DATA_ACULY_
 	$(DOCKER_QUAST) quast.py -o results/quast -t $(CORES) -r $(DATA_ACULY_GENOME) \
 	--features $(DATA_ACULY_ANNOTATION) -l $(ASSEMBLY_NAME) --min-contig 500 $(ASSEMBLY)
 
+
+# anotasi hasil assembly dengan cara mentransfer anotasi dari genome A. lycopersici.
+LIFTOFF_INPUT = results/gatb-minia/A.lycopersici.assembly.fasta
+LIFTOFF_OUTPUT = results/liftoff/draft-assembly-anotasi.gff3
+LIFTOFF_UNMAPPED = $(basename $(LIFTOFF_OUTPUT)).unmapped.txt
+CHROMS = genome/chromosome-pairing.txt
+SCAFFOLDS = genome/scaffolds.txt
+TIFRUNNER_FASTA = genome/arahy.Tifrunner.gnm2.J5K5.genome_main.fna
+TIFRUNNER_GFF = genome/arahy.Tifrunner.gnm2.ann1.4K0L.gene_models_main.gff3
+
+anotasi-genom: $(DIRS) $(LIFTOFF_OUTPUT)
+
+$(LIFTOFF_OUTPUT): $(LIFTOFF_INPUT) $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION)
+	$(DOCKER_LIFTOFF) liftoff -g $(DATA_ACULY_ANNOTATION) -o $@ -dir $(dir $@) -u $(LIFTOFF_UNMAPPED) $(LIFTOFF_INPUT) $(DATA_ACULY_GENOME)
 
 
 
