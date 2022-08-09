@@ -168,8 +168,7 @@ ASSEMBLY = results/gatb-minia/A.lycopersici.assembly_k21.contigs.fa \
 		   results/gatb-minia/A.lycopersici.assembly_k121.contigs.fa \
 		   results/gatb-minia/A.lycopersici.assembly_k141.contigs.fa \
 		   results/gatb-minia/A.lycopersici.assembly_k181.contigs.fa \
-		   results/gatb-minia/A.lycopersici.assembly.fasta
-ASSEMBLY_NAME = k21,k41,k61,k81,k101,k121,k141,k181,k181-scaffold
+ASSEMBLY_NAME = k21,k41,k61,k81,k101,k121,k141,k181
 
 evaluasi-assembly: results/gatb-minia/A.lycopersici.assembly.fasta $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION)
 	@echo ""
