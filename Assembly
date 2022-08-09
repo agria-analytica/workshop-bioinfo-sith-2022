@@ -178,7 +178,7 @@ evaluasi-assembly: results/gatb-minia/A.lycopersici.assembly_k181.contigs.fa $(D
 
 
 # anotasi hasil assembly dengan cara mentransfer anotasi dari genome A. lycopersici.
-LIFTOFF_INPUT = results/gatb-minia/A.lycopersici.assembly.fasta
+LIFTOFF_INPUT = results/gatb-minia/A.lycopersici.assembly_k181.contigs.fa
 LIFTOFF_OUTPUT = results/liftoff/draft-assembly-anotasi.gff3
 LIFTOFF_UNMAPPED = $(basename $(LIFTOFF_OUTPUT)).unmapped.txt
 CHROMS = genome/chromosome-pairing.txt
