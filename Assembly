@@ -144,7 +144,7 @@ $(KMC_HIST_DATA_TRIMMED): $(KMC_DATA_TRIMMED)
 	@echo "Memulai analisis distribusi kmer pada k=21 untuk file $< menggunakan kmc."
 	$(DOCKER_KMC) kmc_tools transform $(basename $<) histogram $@ -cx10000	
 	
-$(KMC_DATA_TRIMMED): $(DATA_TRIMMED)
+$(KMC_DATA_TRIMMED): $(DATA_TRIMMED_SE)
 	@echo ""
 	@echo "Memulai analisis kmer pada k=21 untuk file $< menggunakan kmc."
 	$(DOCKER_KMC) kmc -k21 -t$(CORES) -m4 -ci3 -cs10000 $< $(basename $@) results/kmc/temp
