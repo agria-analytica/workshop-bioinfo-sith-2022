@@ -89,7 +89,7 @@ FASTQC_AFTER = $(addprefix results/fastqc/, $(addsuffix _fastqc.html, $(basename
 data-qc: $(DIRS) $(FASTQC_BEFORE) $(DATA_TRIMMED) $(FASTQC_AFTER)
 	
 $(FASTQC_BEFORE): results/fastqc/%_fastqc.html: data/%.fastq.gz
-	@echo "$(DATA_PE1) $(DATA_TRIMMED_PE1)"
+	@echo ""
 	@echo "Quality control untuk data $(notdir $<) menggunakan FASTQC."
 	$(DOCKER_FASTQC) fastqc -t $(CORES) -o $(dir $@) $<
 
