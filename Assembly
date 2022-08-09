@@ -189,6 +189,8 @@ TIFRUNNER_GFF = genome/arahy.Tifrunner.gnm2.ann1.4K0L.gene_models_main.gff3
 anotasi-genom: $(DIRS) $(LIFTOFF_OUTPUT)
 
 $(LIFTOFF_OUTPUT): $(LIFTOFF_INPUT) $(DATA_ACULY_GENOME) $(DATA_ACULY_ANNOTATION)
+	@echo ""
+	@echo "Memulai anotasi hasil assembly."
 	$(DOCKER_LIFTOFF) liftoff -g $(DATA_ACULY_ANNOTATION) -o $@ -dir $(dir $@) -u $(LIFTOFF_UNMAPPED) $(LIFTOFF_INPUT) $(DATA_ACULY_GENOME)
 
 
